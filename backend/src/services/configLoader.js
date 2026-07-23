@@ -12,7 +12,6 @@ function readJsonFile(fileName) {
     return JSON.parse(fileContent)
 }
 
-
 function readJsonlFile(fileName) {
     const filePath = path.join(__dirname, "../data/", fileName)
     const fileContent = fs.readFileSync(filePath, 'utf-8')
@@ -21,7 +20,6 @@ function readJsonlFile(fileName) {
     return data
 
 }
-
 
 function loadConfig() {
     config.gatewayConfig = readJsonFile("gateway_config.sample.json")

@@ -18,7 +18,9 @@ const authenticateApiKey = (req, res, next) => {
 
     req.tenant = tenant
 
+
     const isModelAllowed = req.tenant.model_allowlist.includes(req.body.model)
+
 
     if (!isModelAllowed) {
         return res.status(403).json({ error: "This Model is not allowed for API Key" })
