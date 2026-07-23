@@ -1,6 +1,6 @@
 
 
-async function chatCompletion(messages, model) {
+async function chatCompletion(messages, model, stream = false) {
 
     const controller = new AbortController()
 
@@ -19,7 +19,8 @@ async function chatCompletion(messages, model) {
             },
             body: JSON.stringify({
                 model,
-                messages
+                messages,
+                stream
             })
         })
 
@@ -29,6 +30,10 @@ async function chatCompletion(messages, model) {
         if (!response.ok) {
             const error = await response.json()
             throw new Error(error.error.message || "Open Router request failed")
+        }
+
+        if (stream) {
+            return response
         }
 
         const data = await response.json()
