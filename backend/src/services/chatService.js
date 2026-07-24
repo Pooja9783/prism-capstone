@@ -1,6 +1,5 @@
 const { resolveModel } = require("./modelResolver");
 const { chatCompletion } = require("../providers/openRouterProvider");
-const { saveRequestLog } = require("../services/requestLogService");
 const providerModelMap = require("../constants/providerModelMap");
 const { getCurrentMonthCost } = require("./budgetService");
 const { checkRateLimit } = require("../services/rateLimitService");
@@ -8,10 +7,11 @@ const { generateEmbedding } = require("../providers/embeddingProvider");
 const { findSimilarPrompt, saveCache } = require("./semanticCacheService");
 const { retry } = require('./retryService')
 const { getConfig } = require('./configLoader')
+const { logRequest } = require('./logService')
+const { calculateCost } = require('./priceService')
 
-async function chat(req) {
+async function chat(req, res) {
 
-    console.log("Inside chat service");
     const config = getConfig()
     const startTime = Date.now();
 
@@ -60,26 +60,20 @@ async function chat(req) {
         if (cachedResponse) {
             const latency = Date.now() - startTime;
 
-            const log = {
+            await logRequest({
                 team: req.tenant.team,
-                providerModel: "cache",
-                provider: {
-                    name: "cache",
-                    model: "cache"
-                },
-                status: "success",
+                provider: "cache",
+                model: "cache",
                 usage: {
-                    promptTokens: 0,
-                    completionTokens: 0,
-                    totalTokens: 0
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    total_tokens: 0,
+                    cost: 0
                 },
-                cost: 0,
-                cacheHit: true,
                 fallback: false,
+                cacheHit: true,
                 latency
-            };
-
-            await saveRequestLog(log);
+            });
 
             return {
                 response: cachedResponse.response,
@@ -102,13 +96,12 @@ async function chat(req) {
         let fallback = false;
 
         try {
-
-            console.log("Provider Model:", providerModel);
             streamResponse = await retry(
                 () => chatCompletion(messages, providerModel, true),
                 retryConfig.max_attempts,
                 retryConfig.initial_backoff_ms,
                 retryConfig.backoff_multiplier)
+
         } catch (error) {
             console.log("Primary provider failed after retries. Trying fallback...");
 
@@ -125,28 +118,81 @@ async function chat(req) {
             } catch (error) {
                 throw new Error("Both primary and fallback provider failed");
             }
-
         }
 
-        return {
-            stream: true,
-            response: streamResponse,
-            metadata: {
-                provider: fallback ? fallbackModel : providerModel,
-                cache: false,
-                fallback,
-                cost: 0
+        // Stream response (works for both primary and fallback)
+
+        const reader = streamResponse.body.getReader();
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+
+        res.setHeader("x-prism-provider", fallback ? fallbackModel : providerModel);
+        res.setHeader("x-prism-cache", "false");
+        res.setHeader("x-prism-fallback", fallback);
+
+        res.flushHeaders();
+
+        const decoder = new TextDecoder();
+        let fullResponse = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                break;
             }
-        }
-    }
 
+            const chunk = decoder.decode(value, { stream: true });
+            fullResponse += chunk;
+            res.write(chunk);
+        }
+
+        const events = fullResponse
+            .split("\n\n")
+            .filter(event => event.startsWith("data: "));
+
+        const parsedEvents = events
+            .filter(event => event !== "data: [DONE]")
+            .map(event => JSON.parse(event.replace("data: ", "")));
+
+        const finalEvent = parsedEvents.find(event => event.usage);
+
+        if (!finalEvent) {
+            throw new Error("Usage event not found in stream response");
+        }
+
+
+        const usage = finalEvent.usage;
+        const latency = Date.now() - startTime;
+
+        console.log("Stream log saved");
+
+        const calculatedCost = calculateCost(
+            fallback ? fallbackModel : providerModel,
+            usage
+        );
+
+        await logRequest({
+            team: req.tenant.team,
+            provider: finalEvent.provider,
+            model: finalEvent.model,
+            usage: {
+                ...usage,
+                cost: calculatedCost
+            },
+            fallback,
+            cacheHit: false,
+            latency
+        });
+
+        res.end();
+        return;
+    }
 
     // Call provider
     let response;
     let fallback = false;
-
-    console.log("Provider Model:", providerModel);
-
     try {
         response = await retry(
             () => chatCompletion(messages, providerModel),
@@ -172,44 +218,50 @@ async function chat(req) {
 
     const latency = Date.now() - startTime;
 
-    // Normal request log
-    const log = {
-        team: req.tenant.team,
-        providerModel: response.model,
-        provider: {
-            name: response.provider,
-            model: response.model
-        },
-        status: "success",
-        usage: {
-            promptTokens: response.usage.prompt_tokens,
-            completionTokens: response.usage.completion_tokens,
-            totalTokens: response.usage.total_tokens
-        },
-        cost: response.usage.cost,
-        cacheHit: false,
-        fallback,
-        latency
-    };
+    const pricingModel = fallback ? fallbackModel : providerModel;
 
-    await saveRequestLog(log);
+    const calculatedCost = calculateCost(
+        pricingModel,
+        response.usage
+    );
+
+    await logRequest({
+        team: req.tenant.team,
+        provider: response.provider,
+        model: response.model,
+        usage: {
+            ...response.usage,
+            cost: calculatedCost
+        },
+        fallback,
+        cacheHit: false,
+        latency
+    });
+
+    const cachedResponse = {
+        ...response,
+        usage: {
+            ...response.usage,
+            cost: calculatedCost
+        }
+    };
 
     // Save response to semantic cache
     await saveCache(
         req.tenant.team,
         prompt,
         embedding,
-        response
+        cachedResponse
     );
 
     return {
-        stream: true,
+        stream: false,
         response,
         metadata: {
             provider: response.provider,
             cache: false,
             fallback,
-            cost: response.usage.cost
+            cost: calculatedCost
         }
 
     };
