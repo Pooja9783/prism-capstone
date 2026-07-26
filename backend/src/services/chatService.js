@@ -22,7 +22,7 @@ async function chat(req, res) {
 
     const prompt = messages.map(message => message.content).join(" ");
 
-    const routing = resolveModel(model);
+    const routing = resolveModel(model, prompt);
     const providerModel = providerModelMap[routing.primary];
     const fallbackModel = providerModelMap[routing.fallbacks[0]];
 
