@@ -18,7 +18,7 @@ const menuItems = [
     },
     {
         name: "Requests",
-        href: "/request",
+        href: "/requests",
         icon: FileText,
     },
     {
