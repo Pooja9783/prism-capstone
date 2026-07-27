@@ -14,6 +14,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import AppLayout from "@/components/layouts/AppLayout";
 
 
 const requests = [
@@ -60,129 +62,170 @@ export default function RequestsPage() {
     return (
         <div className="space-y-6">
 
-            {/* Heading */}
-            <div>
-                <h1 className="text-4xl font-bold tracking-tight">
-                    Requests
-                </h1>
 
-                <p className="text-muted-foreground mt-2">
-                    Inspect and debug all Prism gateway requests.
-                </p>
-            </div>
+            <AppLayout>
+                {/* Heading */}
+                <div>
+                    <h1 className="text-4xl font-bold tracking-tight">
+                        Requests
+                    </h1>
 
-            <div className="rounded-xl border p-5">
+                    <p className="text-muted-foreground mt-2">
+                        Inspect and debug all Prism gateway requests.
+                    </p>
+                </div>
 
-                <div className="grid gap-4 md:grid-cols-4">
+                {requests.length === 0 && (
+                    <div className="py-20 text-center">
 
-                    <Input
-                        placeholder="Search requests..."
-                    />
+                        <h3 className="text-lg font-semibold">
+                            No requests found
+                        </h3>
 
-                    <Select>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Provider" />
-                        </SelectTrigger>
+                        <p className="text-muted-foreground mt-2">
+                            Try changing your search or filters.
+                        </p>
 
-                        <SelectContent>
-                            <SelectItem value="all">All Providers</SelectItem>
-                            <SelectItem value="openai">OpenAI</SelectItem>
-                            <SelectItem value="anthropic">Anthropic</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    </div>
+                )}
 
-                    <Select>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Cache" />
-                        </SelectTrigger>
+                <div className="rounded-xl border p-5">
 
-                        <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="hit">Hit</SelectItem>
-                            <SelectItem value="miss">Miss</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="grid gap-4 md:grid-cols-4">
 
-                    <Select>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Fallback" />
-                        </SelectTrigger>
+                        <Input
+                            placeholder="Search requests..."
+                        />
 
-                        <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="yes">Yes</SelectItem>
-                            <SelectItem value="no">No</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        <Select>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Provider" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                <SelectItem value="all">All Providers</SelectItem>
+                                <SelectItem value="openai">OpenAI</SelectItem>
+                                <SelectItem value="anthropic">Anthropic</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Cache" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="hit">Hit</SelectItem>
+                                <SelectItem value="miss">Miss</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Fallback" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="yes">Yes</SelectItem>
+                                <SelectItem value="no">No</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                    </div>
 
                 </div>
 
-            </div>
+                {/* Table */}
+                <div className="rounded-xl border p-4">
+                    <div className="rounded-xl border">
 
-            {/* Table */}
-            <div className="rounded-xl border p-4">
-                <div className="rounded-xl border">
+                        <Table>
 
-                    <Table>
-
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Time</TableHead>
-                                <TableHead>Team</TableHead>
-                                <TableHead>Provider</TableHead>
-                                <TableHead>Model</TableHead>
-                                <TableHead>Tokens</TableHead>
-                                <TableHead>Cost</TableHead>
-                                <TableHead>Cache</TableHead>
-                                <TableHead>Fallback</TableHead>
-                                <TableHead>Latency</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-
-                            {requests.map((request) => (
-
-                                <TableRow key={request.id}>
-
-                                    <TableCell>{request.time}</TableCell>
-
-                                    <TableCell>{request.team}</TableCell>
-
-                                    <TableCell className="font-medium">
-                                        {request.provider}
-                                    </TableCell>
-
-                                    <TableCell className="text-muted-foreground">
-                                        {request.model}
-                                    </TableCell>
-
-                                    <TableCell>{request.tokens}</TableCell>
-
-                                    <TableCell className="font-medium">
-                                        {request.cost}
-                                    </TableCell>
-                                    <TableCell>
-                                        {request.cache ? "Yes" : "No"}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {request.fallback ? "Yes" : "No"}
-                                    </TableCell>
-
-                                    <TableCell>{request.latency}</TableCell>
-
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Time</TableHead>
+                                    <TableHead>Team</TableHead>
+                                    <TableHead>Provider</TableHead>
+                                    <TableHead>Model</TableHead>
+                                    <TableHead>Tokens</TableHead>
+                                    <TableHead>Cost</TableHead>
+                                    <TableHead>Cache</TableHead>
+                                    <TableHead>Fallback</TableHead>
+                                    <TableHead>Latency</TableHead>
                                 </TableRow>
+                            </TableHeader>
 
-                            ))}
+                            <TableBody>
 
-                        </TableBody>
+                                {requests.map((request) => (
 
-                    </Table>
+                                    <TableRow
+                                        key={request.id}
+                                        className="cursor-pointer hover:bg-muted/40 transition-colors"
+                                    >
 
+                                        <TableCell>{request.time}</TableCell>
+
+                                        <TableCell>{request.team}</TableCell>
+
+                                        <TableCell className="font-medium">
+                                            {request.provider}
+                                        </TableCell>
+
+                                        <TableCell className="text-muted-foreground">
+                                            {request.model}
+                                        </TableCell>
+
+                                        <TableCell>{request.tokens}</TableCell>
+
+                                        <TableCell className="font-medium">
+                                            {request.cost}
+                                        </TableCell>
+                                        <TableCell>
+                                            {request.cache ? "Yes" : "No"}
+                                        </TableCell>
+
+                                        <TableCell>
+                                            {request.fallback ? "Yes" : "No"}
+                                        </TableCell>
+
+                                        <TableCell>{request.latency}</TableCell>
+
+                                    </TableRow>
+
+                                ))}
+
+                            </TableBody>
+
+                        </Table>
+                        <div className="flex items-center justify-between mt-6">
+
+                            <p className="text-sm text-muted-foreground">
+                                Showing 1-3 of 3 requests
+                            </p>
+
+                            <div className="flex gap-2">
+
+                                <Button variant="outline">
+                                    Previous
+                                </Button>
+
+                                <Button variant="default">
+                                    1
+                                </Button>
+
+                                <Button variant="outline">
+                                    Next
+                                </Button>
+
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-            </div>
-
+            </AppLayout>
         </div >
     );
 }
