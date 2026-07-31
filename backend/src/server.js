@@ -1,4 +1,5 @@
 const express = require('express')
+const cors = require("cors");
 require('dotenv').config()
 
 const { connectDB } = require("../src/config/database")
@@ -10,6 +11,14 @@ connectDB()
 loadConfig()
 
 const app = express()
+
+app.use(cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+}));
+
+
 app.use(express.json())
 
 app.use("/v1", chatRoutes)
