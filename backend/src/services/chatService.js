@@ -166,12 +166,16 @@ async function chat(req, res) {
         const usage = finalEvent.usage;
         const latency = Date.now() - startTime;
 
-        console.log("Stream log saved");
+        const pricingModel = fallback
+            ? routing.fallbacks[0]
+            : routing.primary;
 
         const calculatedCost = calculateCost(
-            fallback ? fallbackModel : providerModel,
+            pricingModel,
             usage
         );
+
+
 
         await logRequest({
             team: req.tenant.team,
@@ -185,6 +189,8 @@ async function chat(req, res) {
             cacheHit: false,
             latency
         });
+
+        console.log("Stream log saved");
 
         res.end();
         return;
@@ -218,12 +224,11 @@ async function chat(req, res) {
 
     const latency = Date.now() - startTime;
 
-    const pricingModel = fallback ? fallbackModel : providerModel;
+    const pricingModel = fallback
+        ? routing.fallbacks[0]
+        : routing.primary;
 
-    const calculatedCost = calculateCost(
-        pricingModel,
-        response.usage
-    );
+    calculateCost(fallback ? fallbackModel : providerModel, usage);
 
     await logRequest({
         team: req.tenant.team,
