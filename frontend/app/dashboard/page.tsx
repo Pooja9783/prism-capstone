@@ -24,7 +24,7 @@ export default function DashboardPage() {
     useEffect(() => {
         async function fetchMetrics() {
             try {
-                const response = await fetch("http://localhost:5000/v1/metrics");
+                const response = await fetch("https://prism-capstone.onrender.com/v1/metrics");
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch metrics");
