@@ -28,24 +28,14 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import AppLayout from "@/components/layouts/AppLayout";
+import { useEffect, useState } from "react";
 
 
-const usageData = [
-    { day: "Mon", cost: 18, tokens: 120000 },
-    { day: "Tue", cost: 25, tokens: 180000 },
-    { day: "Wed", cost: 20, tokens: 150000 },
-    { day: "Thu", cost: 32, tokens: 250000 },
-    { day: "Fri", cost: 28, tokens: 220000 },
-    { day: "Sat", cost: 16, tokens: 100000 },
-    { day: "Sun", cost: 22, tokens: 170000 },
-];
 
-const providerData = [
-    { name: "OpenAI", value: 48 },
-    { name: "Anthropic", value: 27 },
-    { name: "Google", value: 15 },
-    { name: "Others", value: 10 },
-];
+type ProviderData = {
+    name: string;
+    value: number;
+};
 
 const COLORS = [
     "#7c3aed",
@@ -54,12 +44,144 @@ const COLORS = [
     "#ddd6fe",
 ];
 
+type Metrics = {
+    totalRequests: number;
+    totalCost: number;
+    totalTokens: number;
+    averageLatency: number;
+    fallbackCount: number;
+    cacheHits: number;
+};
+
+type UsageDetail = {
+    date: string;
+    cost: number;
+    tokens: number;
+};
+
+type ModelUsage = {
+    model: string;
+    requests: number;
+    tokens: number;
+    cost: number;
+};
+
 export default function UsagePage() {
+
+    const [metrics, setMetrics] = useState<Metrics | null>(null);
+    const [usageData, setUsageData] = useState<UsageDetail[]>([]);
+    const [providerData, setProviderData] = useState<ProviderData[]>([]);
+    const [models, setModels] = useState<ModelUsage[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+
+
+
+    useEffect(() => {
+        async function fetchMetrics() {
+            try {
+                const response = await fetch(
+                    "http://localhost:5000/v1/metrics",
+                    {
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch usage metrics");
+                }
+
+                const data: Metrics = await response.json();
+                setMetrics(data);
+            } catch (error) {
+                console.error(error);
+                setError("Unable to load usage metrics");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchMetrics();
+    }, []);
+
+    useEffect(() => {
+        async function fetchUsageDetails() {
+            try {
+                const response = await fetch(
+                    "http://localhost:5000/v1/metrics/usage-details",
+                    {
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch usage details");
+                }
+
+                const data: UsageDetail[] = await response.json();
+                setUsageData(data);
+            } catch (error) {
+                console.error("Usage details error:", error);
+            }
+        }
+
+        fetchUsageDetails();
+    }, []);
+
+    useEffect(() => {
+        async function fetchProviderDistribution() {
+            try {
+                const response = await fetch(
+                    "http://localhost:5000/v1/metrics/providers",
+                    {
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch provider distribution");
+                }
+
+                const data: ProviderData[] = await response.json();
+                setProviderData(data);
+            } catch (error) {
+                console.error("Provider distribution error:", error);
+            }
+        }
+
+        fetchProviderDistribution();
+    }, []);
+
+    useEffect(() => {
+        async function fetchModels() {
+            try {
+                const response = await fetch(
+                    "http://localhost:5000/v1/metrics/models",
+                    {
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch models");
+                }
+
+                const data: ModelUsage[] = await response.json();
+                setModels(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchModels();
+    }, []);
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
             <AppLayout>
-                <div>
+                <div className="mb-4">
                     <h1 className="text-4xl font-bold tracking-tight">
                         Usage
                     </h1>
@@ -70,19 +192,24 @@ export default function UsagePage() {
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 
-                    <Card>
+                    <Card >
                         <CardHeader>
                             <CardTitle>Total Cost</CardTitle>
                         </CardHeader>
 
-                        <CardContent>
-                            <p className="text-3xl font-bold">£142.38</p>
-                            <p className="text-sm text-muted-foreground">
-                                +8% this week
-                            </p>
-                        </CardContent>
+                        <p className="text-3xl font-bold">
+                            {loading
+                                ? "Loading..."
+                                : error
+                                    ? "Error"
+                                    : `$${metrics?.totalCost.toFixed(8) ?? "0.00000000"}`}
+                        </p>
+
+                        <p className="text-sm text-muted-foreground">
+                            Across all requests
+                        </p>
                     </Card>
 
                     <Card>
@@ -91,7 +218,14 @@ export default function UsagePage() {
                         </CardHeader>
 
                         <CardContent>
-                            <p className="text-3xl font-bold">2.3M</p>
+                            <p className="text-3xl font-bold">
+                                {loading
+                                    ? "Loading..."
+                                    : error
+                                        ? "Error"
+                                        : (metrics?.totalTokens ?? 0).toLocaleString()}
+                            </p>
+
                             <p className="text-sm text-muted-foreground">
                                 Across all providers
                             </p>
@@ -104,9 +238,16 @@ export default function UsagePage() {
                         </CardHeader>
 
                         <CardContent>
-                            <p className="text-3xl font-bold">214 ms</p>
+                            <p className="text-3xl font-bold">
+                                {loading
+                                    ? "Loading..."
+                                    : error
+                                        ? "Error"
+                                        : `${metrics?.averageLatency ?? 0} ms`}
+                            </p>
+
                             <p className="text-sm text-muted-foreground">
-                                Last 24 hours
+                                Average response time
                             </p>
                         </CardContent>
                     </Card>
@@ -117,9 +258,21 @@ export default function UsagePage() {
                         </CardHeader>
 
                         <CardContent>
-                            <p className="text-3xl font-bold">61%</p>
+                            <p className="text-3xl font-bold">
+                                {loading
+                                    ? "Loading..."
+                                    : error
+                                        ? "Error"
+                                        : metrics && metrics.totalRequests > 0
+                                            ? `${(
+                                                (metrics.cacheHits / metrics.totalRequests) *
+                                                100
+                                            ).toFixed(1)}%`
+                                            : "0%"}
+                            </p>
+
                             <p className="text-sm text-muted-foreground">
-                                Semantic cache
+                                {metrics?.cacheHits ?? 0} cached responses
                             </p>
                         </CardContent>
                     </Card>
@@ -128,7 +281,7 @@ export default function UsagePage() {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <Card>
+                    <Card className="mb-4 ">
                         <CardHeader>
                             <CardTitle>Daily Cost</CardTitle>
                         </CardHeader>
@@ -136,14 +289,25 @@ export default function UsagePage() {
                         <CardContent>
                             <div className="h-80">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={usageData}>
-                                        <XAxis dataKey="day" />
-                                        <YAxis />
+                                    <AreaChart
+                                        data={usageData}
+                                        margin={{ top: 4, right: 4, left: 4, bottom: 4 }}
+                                    >
+                                        <XAxis dataKey="date" />
+
+                                        <YAxis
+                                            width={80}
+                                            tickFormatter={(value: number) => `$${value.toFixed(6)}`}
+                                        />
+
                                         <Tooltip />
 
                                         <Area
                                             type="monotone"
                                             dataKey="cost"
+                                            stroke="#7c3aed"
+                                            fill="#c4b5fd"
+                                            fillOpacity={0.4}
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -151,7 +315,7 @@ export default function UsagePage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="mb-4">
                         <CardHeader>
                             <CardTitle>Token Usage</CardTitle>
                         </CardHeader>
@@ -160,8 +324,8 @@ export default function UsagePage() {
                             <div className="h-80">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={usageData}>
-                                        <XAxis dataKey="day" />
-                                        <YAxis />
+                                        <XAxis dataKey="date" />
+                                        <YAxis allowDecimals={false} />
                                         <Tooltip />
 
                                         <Bar
@@ -175,7 +339,7 @@ export default function UsagePage() {
                         </CardContent>
                     </Card>
                 </div>
-                <Card>
+                <Card className="mb-4">
                     <CardHeader>
                         <CardTitle>Provider Distribution</CardTitle>
                     </CardHeader>
@@ -192,10 +356,10 @@ export default function UsagePage() {
                                         outerRadius={100}
                                         label
                                     >
-                                        {providerData.map((entry, index) => (
+                                        {providerData.map((provider, index) => (
                                             <Cell
-                                                key={index}
-                                                fill={COLORS[index]}
+                                                key={provider.name}
+                                                fill={COLORS[index % COLORS.length]}
                                             />
                                         ))}
                                     </Pie>
@@ -209,53 +373,42 @@ export default function UsagePage() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Top Models Usage</CardTitle>
-                    </CardHeader>
 
-                    <CardContent>
 
-                        <Table>
+                <CardContent className="mb-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Top Models Usage</CardTitle>
+                        </CardHeader>
 
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Model</TableHead>
-                                    <TableHead>Requests</TableHead>
-                                    <TableHead>Tokens</TableHead>
-                                    <TableHead>Cost</TableHead>
-                                </TableRow>
-                            </TableHeader>
+                        <CardContent>
+                            <Table>
 
-                            <TableBody>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Model</TableHead>
+                                        <TableHead>Requests</TableHead>
+                                        <TableHead>Tokens</TableHead>
+                                        <TableHead>Cost</TableHead>
+                                    </TableRow>
+                                </TableHeader>
 
-                                <TableRow>
-                                    <TableCell>GPT-4o-mini</TableCell>
-                                    <TableCell>3,248</TableCell>
-                                    <TableCell>1.2M</TableCell>
-                                    <TableCell>£42.18</TableCell>
-                                </TableRow>
+                                <TableBody>
+                                    {models.map((model) => (
+                                        <TableRow key={model.model}>
+                                            <TableCell>{model.model}</TableCell>
+                                            <TableCell>{model.requests}</TableCell>
+                                            <TableCell>{model.tokens.toLocaleString()}</TableCell>
+                                            <TableCell>${model.cost.toFixed(8)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
 
-                                <TableRow>
-                                    <TableCell>Claude Sonnet</TableCell>
-                                    <TableCell>2,112</TableCell>
-                                    <TableCell>860K</TableCell>
-                                    <TableCell>£31.40</TableCell>
-                                </TableRow>
+                            </Table>
+                        </CardContent>
+                    </Card>
 
-                                <TableRow>
-                                    <TableCell>Gemini Flash</TableCell>
-                                    <TableCell>1,620</TableCell>
-                                    <TableCell>640K</TableCell>
-                                    <TableCell>£18.72</TableCell>
-                                </TableRow>
-
-                            </TableBody>
-
-                        </Table>
-
-                    </CardContent>
-                </Card>
+                </CardContent>
             </AppLayout>
         </div>
     );

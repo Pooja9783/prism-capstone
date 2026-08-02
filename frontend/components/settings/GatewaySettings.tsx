@@ -1,81 +1,91 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-} from "@/components/ui/select";
-export default function GatewaySettings() {
-    return (
-        <Card>
+type ModelAlias = {
+  primary?: string;
+  fallbacks?: string[];
+  route_by_difficulty?: {
+    simple: string;
+    complex: string;
+  };
+};
 
-            <CardHeader>
-                <CardTitle>
-                    Gateway Configuration
-                </CardTitle>
-            </CardHeader>
+type GatewaySettingsProps = {
+  modelAliases: {
+    fast: ModelAlias;
+    smart: ModelAlias;
+    auto: ModelAlias;
+  };
+};
 
-            <CardContent className="space-y-6">
+export default function GatewaySettings({
+  modelAliases,
+}: GatewaySettingsProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Model Routing</CardTitle>
+      </CardHeader>
 
-                <div className="grid gap-6 md:grid-cols-3">
+      <CardContent className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border p-4">
+          <p className="font-semibold">Fast</p>
 
-                    <div className="space-y-2">
-                        <Label>Default Model</Label>
+          <p className="mt-2 text-sm">
+            Primary:{" "}
+            <span className="font-medium">
+              {modelAliases?.fast.primary}
+            </span>
+          </p>
 
-                        <Select defaultValue="gpt-4o-mini">
-                            <SelectTrigger className="w-full">
-                                <SelectValue />
-                            </SelectTrigger>
+          <p className="text-sm">
+            Fallback:{" "}
+            <span className="font-medium">
+              {modelAliases?.fast.fallbacks?.join(", ")}
+            </span>
+          </p>
+        </div>
 
-                            <SelectContent>
-                                <SelectItem value="gpt-4o-mini">
-                                    GPT-4o-mini
-                                </SelectItem>
+        <div className="rounded-lg border p-4">
+          <p className="font-semibold">Smart</p>
 
-                                <SelectItem value="claude-sonnet">
-                                    Claude Sonnet
-                                </SelectItem>
+          <p className="mt-2 text-sm">
+            Primary:{" "}
+            <span className="font-medium">
+              {modelAliases?.smart.primary}
+            </span>
+          </p>
 
-                                <SelectItem value="gemini-flash">
-                                    Gemini Flash
-                                </SelectItem>
-                            </SelectContent>
+          <p className="text-sm">
+            Fallback:{" "}
+            <span className="font-medium">
+              {modelAliases?.smart.fallbacks?.join(", ")}
+            </span>
+          </p>
+        </div>
 
-                        </Select>
+        <div className="rounded-lg border p-4 md:col-span-2">
+          <p className="font-semibold">Auto Routing</p>
 
-                    </div>
+          <p className="mt-2 text-sm">
+            Simple prompts →{" "}
+            <span className="font-medium">
+              {modelAliases?.auto.route_by_difficulty?.simple}
+            </span>
+          </p>
 
-                    <div className="space-y-2">
-
-                        <Label>Temperature</Label>
-
-                        <Input
-                            defaultValue="0.7"
-                            type="number"
-                        />
-
-                    </div>
-
-                    <div className="space-y-2">
-
-                        <Label>Max Tokens</Label>
-
-                        <Input
-                            defaultValue="4096"
-                            type="number"
-                        />
-
-                    </div>
-
-                </div>
-
-            </CardContent>
-
-        </Card>
-    );
+          <p className="text-sm">
+            Complex prompts →{" "}
+            <span className="font-medium">
+              {modelAliases?.auto.route_by_difficulty?.complex}
+            </span>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
