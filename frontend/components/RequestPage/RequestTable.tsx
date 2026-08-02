@@ -37,7 +37,7 @@ export default function RequestTable() {
         async function fetchRequests() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/requests?limit=5",
+                    "https://prism-capstone.onrender.com/v1/requests?limit=5",
                     {
                         cache: "no-store",
                     }
