@@ -55,7 +55,7 @@ export default function SettingsPage() {
         async function fetchSettings() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/settings",
+                    "https://prism-capstone.onrender.com/v1/settings",
                     {
                         cache: "no-store",
                     }

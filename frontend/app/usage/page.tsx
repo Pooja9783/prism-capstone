@@ -82,7 +82,7 @@ export default function UsagePage() {
         async function fetchMetrics() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/metrics",
+                    "https://prism-capstone.onrender.com/v1/metrics",
                     {
                         cache: "no-store",
                     }
@@ -109,7 +109,7 @@ export default function UsagePage() {
         async function fetchUsageDetails() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/metrics/usage-details",
+                    "https://prism-capstone.onrender.com/v1/metrics/usage-details",
                     {
                         cache: "no-store",
                     }
@@ -133,7 +133,7 @@ export default function UsagePage() {
         async function fetchProviderDistribution() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/metrics/providers",
+                    "https://prism-capstone.onrender.com/v1/metrics/providers",
                     {
                         cache: "no-store",
                     }
@@ -157,7 +157,7 @@ export default function UsagePage() {
         async function fetchModels() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/metrics/models",
+                    "https://prism-capstone.onrender.com/v1/metrics/models",
                     {
                         cache: "no-store",
                     }

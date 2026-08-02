@@ -26,7 +26,7 @@ export default function UsageChart() {
         async function fetchMetrics() {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/v1/metrics/usage"
+                    "https://prism-capstone.onrender.com/v1/metrics/usage"
                 );
 
                 if (!response.ok) {
