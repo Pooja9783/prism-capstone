@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
     LineChart,
     Line,
@@ -10,36 +11,56 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
-const data = [
-    { day: "Mon", requests: 120 },
-    { day: "Tue", requests: 180 },
-    { day: "Wed", requests: 240 },
-    { day: "Thu", requests: 210 },
-    { day: "Fri", requests: 320 },
-    { day: "Sat", requests: 280 },
-    { day: "Sun", requests: 390 },
-];
+
 
 export default function UsageChart() {
+
+    type UsagePoint = {
+        date: string;
+        requests: number;
+    };
+
+    const [data, setData] = useState<UsagePoint[]>([]);
+
+    useEffect(() => {
+        async function fetchMetrics() {
+            try {
+                const response = await fetch(
+                    "http://localhost:5000/v1/metrics/usage"
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch metrics");
+                }
+
+                const result: UsagePoint[] = await response.json();
+                setData(result);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchMetrics();
+    }, []);
+
+
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">
                 Usage Overview
             </h2>
-            <p className="mb-6 text-m font-semibold">Requests served during the last 7 days</p>
+            <p className="mb-6 text-sm font-semibold">Requests served during the last 7 days</p>
 
             <div className="h-80">
                 <div className="mt-6 h-80">
 
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data}>
-                            <CartesianGrid
-                                vertical={false}
-                                strokeDasharray="3 3"
-                            />
-                            <XAxis dataKey="day" />
+                            <CartesianGrid vertical={false} strokeDasharray="3 3" />
 
-                            <YAxis />
+                            <XAxis dataKey="date" />
+
+                            <YAxis allowDecimals={false} />
 
                             <Tooltip />
 
