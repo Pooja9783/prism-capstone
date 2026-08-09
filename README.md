@@ -104,8 +104,7 @@ Frontend includes:
 ## AI
 
 - OpenRouter
-- Xenova Transformers
-- Embedding based Semantic Cache
+- Embedding-based Semantic Cache
 
 ---
 
