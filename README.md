@@ -377,6 +377,48 @@ npm run dev
 
 ---
 
+
+# Getting Started
+
+## Prerequisites
+
+- Node.js and npm
+- MongoDB connection string
+- OpenRouter API key
+
+## Clone the Repository
+
+```bash[
+git clone https://github.com/Pooja9783/prism-capstone
+cd prism-capstone
+```
+-----
+
+
+## Environment Variables
+
+Configure these variables in the backend `.env` file:
+
+| Variable | Description |
+|---|---|
+| `PORT` | Port used by the backend server |
+| `MONGO_URI` | MongoDB connection string |
+| `OPENROUTER_API_KEY` | API key used to access OpenRouter |
+
+Example `.env` file:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+OPENROUTER_API_KEY=your_openrouter_api_key
+```
+
+Use the actual variable names and port configured in your application. Never commit real API keys or secrets.
+
+
+
+----
+
 # Author
 Pooja Sankhala
 
